@@ -9,10 +9,8 @@ import logging
 import os
 from typing import Any
 
-# TODO: Import boto3 when dependencies are added
-# import boto3
-# from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
-
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -117,22 +115,18 @@ class AWSAuth:
         Returns:
             True if credentials are valid, False otherwise
         """
-        # TODO: Implement credential validation
-        # try:
-        #     session = boto3.Session()
-        #     sts = session.client('sts')
-        #     sts.get_caller_identity()
-        #     return True
-        # except Exception as e:
-        #     logger.error(f"Credential validation failed: {e}")
-        #     return False
-
-        # Check for environment variables or AWS config
-        has_env_creds = all([os.getenv("AWS_ACCESS_KEY_ID"), os.getenv("AWS_SECRET_ACCESS_KEY")])
-
-        has_config = os.path.exists(os.path.expanduser("~/.aws/credentials"))
-
-        return has_env_creds or has_config
+        try:
+            session = boto3.Session()
+            sts = session.client("sts")
+            sts.get_caller_identity()
+            logger.info("AWS credentials validated successfully")
+            return True
+        except (NoCredentialsError, ClientError, ProfileNotFound) as e:
+            logger.error(f"AWS credential validation failed: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error during credential validation: {e}")
+            return False
 
 
 def get_default_region() -> str:

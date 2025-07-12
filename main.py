@@ -15,11 +15,11 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from aws_mcp.server import create_server, setup_logging
-from aws_mcp.utils.auth import AWSAuth, get_default_region
+from aws_mcp.server import run
+from aws_mcp.utils import AWSAuth, get_default_region, setup_logging
 
 
-async def main():
+async def main() -> None:
     """Main entry point for the AWS MCP Server."""
     setup_logging("INFO")
     logger = logging.getLogger(__name__)
@@ -35,38 +35,13 @@ async def main():
             logger.error("Use 'aws configure' or set environment variables.")
             sys.exit(1)
         
-        # Create and configure the MCP server
-        server = create_server(region=region)
-        
-        # TODO: Register service handlers when implemented
-        # from aws_mcp.handlers.ec2 import EC2Handler
-        # from aws_mcp.handlers.s3 import S3Handler
-        # from aws_mcp.handlers.lambda_ import LambdaHandler
-        # 
-        # server.register_handler("ec2", EC2Handler(region))
-        # server.register_handler("s3", S3Handler(region))
-        # server.register_handler("lambda", LambdaHandler(region))
-        
-        # Start the server
+        # Start the MCP server using stdio transport
         logger.info("AWS MCP Server starting...")
-        await server.start()
-        
-        # Keep the server running
-        logger.info("AWS MCP Server is running. Press Ctrl+C to stop.")
-        try:
-            while True:
-                await asyncio.sleep(1)
-        except KeyboardInterrupt:
-            logger.info("Received shutdown signal")
+        await run()
         
     except Exception as e:
         logger.error(f"Failed to start AWS MCP Server: {e}")
         sys.exit(1)
-    
-    finally:
-        if 'server' in locals():
-            await server.stop()
-        logger.info("AWS MCP Server stopped")
 
 
 if __name__ == "__main__":
