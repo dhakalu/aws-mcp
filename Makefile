@@ -56,6 +56,14 @@ scan:
 check: lint test scan 
 	@echo "✅ All quality checks passed!"
 
+start:
+	@echo "🚀 Starting AWS MCP Server..."
+	npx @modelcontextprotocol/inspector uvx mcp_aws 
+
+run:
+	@echo "🚀 Running AWS MCP Server..."
+	uv run main.py
+
 # Install package in production mode
 install:
 	@echo "📦 Installing AWS MCP Server..."
