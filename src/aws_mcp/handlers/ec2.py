@@ -6,10 +6,64 @@ natural language commands via the Model Context Protocol.
 """
 
 import logging
-from typing import Any
+from typing import Any, NotRequired, Protocol, TypedDict
 
 import boto3
-from botocore.exceptions import ClientError
+
+
+class EC2ClientProtocol(Protocol):
+    """Protocol for EC2 client to enable dependency injection and testing."""
+
+    def describe_instances(self, **kwargs: Any) -> dict:
+        """Describe EC2 instances."""
+        ...
+
+
+class InstanceInfo(TypedDict):
+    """TypedDict for EC2 instance information."""
+
+    InstanceId: str
+    InstanceType: str
+    State: str
+    LaunchTime: str
+    AvailabilityZone: str
+    Name: str
+    PublicIP: NotRequired[str]
+    PrivateIP: NotRequired[str]
+
+
+class InstanceListResponse(TypedDict):
+    """TypedDict for list instances response."""
+
+    Instances: list[InstanceInfo]
+    Count: int
+
+
+class InstanceDetailInfo(TypedDict):
+    """TypedDict for detailed EC2 instance information."""
+
+    InstanceId: str
+    InstanceType: str
+    State: str
+    StateReason: str
+    LaunchTime: str
+    Platform: str
+    Architecture: str
+    AvailabilityZone: str
+    SecurityGroups: list[str]
+    VpcId: NotRequired[str]
+    SubnetId: NotRequired[str]
+    KeyName: NotRequired[str]
+    Name: NotRequired[str]
+    PublicIP: NotRequired[str]
+    PrivateIP: NotRequired[str]
+
+
+class InstanceDetailResponse(InstanceDetailInfo):
+    """TypedDict for describe instance response."""
+
+    pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,18 +71,19 @@ logger = logging.getLogger(__name__)
 class EC2Handler:
     """Handler for Amazon EC2 operations."""
 
-    def __init__(self, region: str = "us-east-1"):
+    def __init__(self, region: str = "us-east-1", client: EC2ClientProtocol | None = None):
         """
         Initialize the EC2 handler.
 
         Args:
             region: AWS region to operate in
+            client: Optional EC2 client for dependency injection (useful for testing)
         """
         self.region = region
-        self.client = boto3.client("ec2", region_name=region)
+        self.client = client or boto3.client("ec2", region_name=region)
         logger.info(f"EC2 handler initialized for region: {region}")
 
-    def list_instances(self, state: str = "all") -> dict[str, Any]:
+    def list_instances(self, state: str = "all") -> InstanceListResponse:
         """
         List EC2 instances in the region.
 
@@ -36,53 +91,53 @@ class EC2Handler:
             state: Instance state filter ('running', 'stopped', 'pending', 'terminated', 'all')
 
         Returns:
-            Dictionary containing instance information
+            InstanceListResponse containing:
+            - Instances: List of instance dictionaries
+            - Count: Number of instances
+
+        Raises:
+            ClientError: If AWS API call fails
+            Exception: For other unexpected errors
         """
-        try:
-            filters = []
-            if state != "all":
-                filters.append({"Name": "instance-state-name", "Values": [state]})
+        filters = []
+        if state != "all":
+            filters.append({"Name": "instance-state-name", "Values": [state]})
 
-            response = self.client.describe_instances(Filters=filters)
+        response = self.client.describe_instances(Filters=filters)
 
-            instances = []
-            for reservation in response["Reservations"]:
-                for instance in reservation["Instances"]:
-                    instance_info = {
-                        "InstanceId": instance["InstanceId"],
-                        "InstanceType": instance["InstanceType"],
-                        "State": instance["State"]["Name"],
-                        "LaunchTime": instance["LaunchTime"].isoformat(),
-                        "AvailabilityZone": instance["Placement"]["AvailabilityZone"],
-                    }
+        instances: list[InstanceInfo] = []
+        for reservation in response["Reservations"]:
+            for instance in reservation["Instances"]:
+                # Add name tag if available
+                name = "N/A"
+                for tag in instance.get("Tags", []):
+                    if tag["Key"] == "Name":
+                        name = tag["Value"]
+                        break
 
-                    # Add name tag if available
-                    name = "N/A"
-                    for tag in instance.get("Tags", []):
-                        if tag["Key"] == "Name":
-                            name = tag["Value"]
-                            break
-                    instance_info["Name"] = name
+                # Create the instance info with all required fields
+                instance_info: InstanceInfo = {
+                    "InstanceId": instance["InstanceId"],
+                    "InstanceType": instance["InstanceType"],
+                    "State": instance["State"]["Name"],
+                    "LaunchTime": instance["LaunchTime"].isoformat(),
+                    "AvailabilityZone": instance["Placement"]["AvailabilityZone"],
+                    "Name": name,
+                }
 
-                    # Add IP addresses if available
-                    if "PublicIpAddress" in instance:
-                        instance_info["PublicIP"] = instance["PublicIpAddress"]
-                    if "PrivateIpAddress" in instance:
-                        instance_info["PrivateIP"] = instance["PrivateIpAddress"]
+                # Add IP addresses if available
+                if "PublicIpAddress" in instance:
+                    instance_info["PublicIP"] = instance["PublicIpAddress"]
+                if "PrivateIpAddress" in instance:
+                    instance_info["PrivateIP"] = instance["PrivateIpAddress"]
 
-                    instances.append(instance_info)
+                instances.append(instance_info)
 
-            logger.info(f"Listed {len(instances)} EC2 instances with state '{state}'")
-            return {"instances": instances, "count": len(instances)}
+        logger.info(f"Listed {len(instances)} EC2 instances with state '{state}'")
+        result: InstanceListResponse = {"Instances": instances, "Count": len(instances)}
+        return result
 
-        except ClientError as e:
-            logger.error(f"Failed to list EC2 instances: {e}")
-            return {"error": str(e), "instances": [], "count": 0}
-        except Exception as e:
-            logger.error(f"Unexpected error listing EC2 instances: {e}")
-            return {"error": str(e), "instances": [], "count": 0}
-
-    def describe_instance(self, instance_id: str) -> dict[str, Any]:
+    def describe_instance(self, instance_id: str) -> InstanceDetailResponse:
         """
         Get detailed information about a specific EC2 instance.
 
@@ -90,50 +145,55 @@ class EC2Handler:
             instance_id: The EC2 instance ID
 
         Returns:
-            Dictionary containing detailed instance information
+            InstanceDetailResponse containing detailed instance information
+
+        Raises:
+            ClientError: If AWS API call fails
+            ValueError: If instance not found
+            Exception: For other unexpected errors
         """
-        try:
-            response = self.client.describe_instances(InstanceIds=[instance_id])
+        response = self.client.describe_instances(InstanceIds=[instance_id])
 
-            if not response["Reservations"]:
-                return {"error": f"Instance {instance_id} not found"}
+        if not response["Reservations"]:
+            raise ValueError(f"Instance {instance_id} not found")
 
-            instance = response["Reservations"][0]["Instances"][0]
+        instance = response["Reservations"][0]["Instances"][0]
 
-            # Extract relevant information
-            instance_info = {
-                "InstanceId": instance["InstanceId"],
-                "InstanceType": instance["InstanceType"],
-                "State": instance["State"]["Name"],
-                "StateReason": instance.get("StateReason", {}).get("Message", "N/A"),
-                "LaunchTime": instance["LaunchTime"].isoformat(),
-                "Platform": instance.get("Platform", "Linux/Unix"),
-                "Architecture": instance["Architecture"],
-                "VpcId": instance.get("VpcId"),
-                "SubnetId": instance.get("SubnetId"),
-                "AvailabilityZone": instance["Placement"]["AvailabilityZone"],
-                "SecurityGroups": [sg["GroupName"] for sg in instance["SecurityGroups"]],
-                "KeyName": instance.get("KeyName"),
-            }
+        # Add name tag if available
+        name: str | None = None
+        for tag in instance.get("Tags", []):
+            if tag["Key"] == "Name":
+                name = tag["Value"]
+                break
 
-            # Add name tag if available
-            for tag in instance.get("Tags", []):
-                if tag["Key"] == "Name":
-                    instance_info["Name"] = tag["Value"]
-                    break
+        # Extract relevant information
+        instance_info: InstanceDetailResponse = {
+            "InstanceId": instance["InstanceId"],
+            "InstanceType": instance["InstanceType"],
+            "State": instance["State"]["Name"],
+            "StateReason": instance.get("StateReason", {}).get("Message", "N/A"),
+            "LaunchTime": instance["LaunchTime"].isoformat(),
+            "Platform": instance.get("Platform", "Linux/Unix"),
+            "Architecture": instance["Architecture"],
+            "AvailabilityZone": instance["Placement"]["AvailabilityZone"],
+            "SecurityGroups": [sg["GroupName"] for sg in instance["SecurityGroups"]],
+        }
 
-            # Add IP addresses if available
-            if "PublicIpAddress" in instance:
-                instance_info["PublicIP"] = instance["PublicIpAddress"]
-            if "PrivateIpAddress" in instance:
-                instance_info["PrivateIP"] = instance["PrivateIpAddress"]
+        # Add optional fields
+        if instance.get("VpcId"):
+            instance_info["VpcId"] = instance["VpcId"]
+        if instance.get("SubnetId"):
+            instance_info["SubnetId"] = instance["SubnetId"]
+        if instance.get("KeyName"):
+            instance_info["KeyName"] = instance["KeyName"]
+        if name:
+            instance_info["Name"] = name
 
-            logger.info(f"Retrieved details for instance {instance_id}")
-            return instance_info
+        # Add IP addresses if available
+        if "PublicIpAddress" in instance:
+            instance_info["PublicIP"] = instance["PublicIpAddress"]
+        if "PrivateIpAddress" in instance:
+            instance_info["PrivateIP"] = instance["PrivateIpAddress"]
 
-        except ClientError as e:
-            logger.error(f"Failed to describe instance {instance_id}: {e}")
-            return {"error": str(e)}
-        except Exception as e:
-            logger.error(f"Unexpected error describing instance {instance_id}: {e}")
-            return {"error": str(e)}
+        logger.info(f"Retrieved details for instance {instance_id}")
+        return instance_info
