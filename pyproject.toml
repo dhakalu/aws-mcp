@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "aws-mcp"
 version = "0.1.0"
@@ -136,3 +140,9 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aws_mcp"]
+
+[tool.hatch.build.editable]
+packages = ["src/aws_mcp"]
