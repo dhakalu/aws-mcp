@@ -6,9 +6,17 @@ natural language commands via the Model Context Protocol.
 """
 
 import logging
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, Protocol, TypedDict
 
 import boto3
+
+
+class EC2ClientProtocol(Protocol):
+    """Protocol for EC2 client to enable dependency injection and testing."""
+
+    def describe_instances(self, **kwargs: Any) -> dict:
+        """Describe EC2 instances."""
+        ...
 
 
 class InstanceInfo(TypedDict):
@@ -63,15 +71,16 @@ logger = logging.getLogger(__name__)
 class EC2Handler:
     """Handler for Amazon EC2 operations."""
 
-    def __init__(self, region: str = "us-east-1"):
+    def __init__(self, region: str = "us-east-1", client: EC2ClientProtocol | None = None):
         """
         Initialize the EC2 handler.
 
         Args:
             region: AWS region to operate in
+            client: Optional EC2 client for dependency injection (useful for testing)
         """
         self.region = region
-        self.client = boto3.client("ec2", region_name=region)
+        self.client = client or boto3.client("ec2", region_name=region)
         logger.info(f"EC2 handler initialized for region: {region}")
 
     def list_instances(self, state: str = "all") -> InstanceListResponse:
