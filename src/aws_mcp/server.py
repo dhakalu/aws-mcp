@@ -5,6 +5,7 @@ This module contains the main MCP server that handles communication between
 AI assistants and AWS services.
 """
 
+import json
 import logging
 
 from mcp.server.fastmcp import FastMCP
@@ -55,31 +56,40 @@ class AWSSMCPServer:
             handler = EC2Handler(self.region)
             result = handler.list_instances(state)
 
-            if "error" in result:
-                return f"Error listing EC2 instances: {result['error']}"
-
-            instances = result["instances"]
+            instances = result["Instances"]
             if not instances:
-                return f"No EC2 instances found in {self.region} with state '{state}'"
+                return json.dumps(
+                    {
+                        "Error": False,
+                        "Message": f"No EC2 instances found in {self.region} with state '{state}'",
+                        "Instances": [],
+                        "Count": 0,
+                        "Region": self.region,
+                        "StateFilter": state,
+                    }
+                )
 
-            # Format the response
-            response = f"Found {result['count']} EC2 instance(s) in {self.region}:\n\n"
-            for instance in instances:
-                response += f"• {instance['InstanceId']} ({instance['Name']})\n"
-                response += f"  Type: {instance['InstanceType']}\n"
-                response += f"  State: {instance['State']}\n"
-                response += f"  Zone: {instance['AvailabilityZone']}\n"
-                if "PublicIP" in instance:
-                    response += f"  Public IP: {instance['PublicIP']}\n"
-                if "PrivateIP" in instance:
-                    response += f"  Private IP: {instance['PrivateIP']}\n"
-                response += "\n"
-
-            return response.strip()
+            return json.dumps(
+                {
+                    "Error": False,
+                    "Message": f"Found {result['Count']} EC2 instance(s) in {self.region}",
+                    "Instances": instances,
+                    "Count": result["Count"],
+                    "Region": self.region,
+                    "StateFilter": state,
+                }
+            )
 
         except Exception as e:
             logger.error(f"Error in _list_ec2_instances: {e}")
-            return f"Error listing EC2 instances: {str(e)}"
+            return json.dumps(
+                {
+                    "Error": True,
+                    "Message": f"Error listing EC2 instances: {str(e)}",
+                    "Instances": [],
+                    "Count": 0,
+                }
+            )
 
     async def _describe_ec2_instance(self, instance_id: str) -> str:
         """Describe a specific EC2 instance using boto3."""
@@ -89,39 +99,37 @@ class AWSSMCPServer:
             handler = EC2Handler(self.region)
             result = handler.describe_instance(instance_id)
 
-            if "error" in result:
-                return f"Error describing instance {instance_id}: {result['error']}"
+            return json.dumps(
+                {
+                    "Error": False,
+                    "Message": f"Successfully retrieved details for instance {instance_id}",
+                    "Instance": result,
+                    "InstanceId": instance_id,
+                    "Region": self.region,
+                }
+            )
 
-            # Format the detailed response
-            response = f"EC2 Instance Details for {instance_id}:\n\n"
-            response += f"Name: {result.get('Name', 'N/A')}\n"
-            response += f"Instance Type: {result['InstanceType']}\n"
-            response += f"State: {result['State']}\n"
-            response += f"State Reason: {result['StateReason']}\n"
-            response += f"Platform: {result['Platform']}\n"
-            response += f"Architecture: {result['Architecture']}\n"
-            response += f"Availability Zone: {result['AvailabilityZone']}\n"
-            response += f"Launch Time: {result['LaunchTime']}\n"
-
-            if result.get("VpcId"):
-                response += f"VPC ID: {result['VpcId']}\n"
-            if result.get("SubnetId"):
-                response += f"Subnet ID: {result['SubnetId']}\n"
-            if result.get("PublicIP"):
-                response += f"Public IP: {result['PublicIP']}\n"
-            if result.get("PrivateIP"):
-                response += f"Private IP: {result['PrivateIP']}\n"
-            if result.get("KeyName"):
-                response += f"Key Pair: {result['KeyName']}\n"
-
-            if result.get("SecurityGroups"):
-                response += f"Security Groups: {', '.join(result['SecurityGroups'])}\n"
-
-            return response.strip()
-
+        except ValueError as e:
+            # Instance not found
+            logger.warning(f"Instance not found: {e}")
+            return json.dumps(
+                {
+                    "Error": True,
+                    "Message": str(e),
+                    "Instance": None,
+                    "InstanceId": instance_id,
+                }
+            )
         except Exception as e:
             logger.error(f"Error in _describe_ec2_instance: {e}")
-            return f"Error describing instance {instance_id}: {str(e)}"
+            return json.dumps(
+                {
+                    "Error": True,
+                    "Message": f"Error describing instance {instance_id}: {str(e)}",
+                    "Instance": None,
+                    "InstanceId": instance_id,
+                }
+            )
 
     async def start(self) -> None:
         """Start the MCP server using http transport."""
