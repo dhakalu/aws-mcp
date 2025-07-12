@@ -1,5 +1,11 @@
 # AWS MCP Server
 
+[![CI](https://github.com/dhakalu/aws-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/dhakalu/aws-mcp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/dhakalu/aws-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/dhakalu/aws-mcp)
+[![PyPI version](https://badge.fury.io/py/aws-mcp.svg)](https://badge.fury.io/py/aws-mcp)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Model Context Protocol (MCP) server that provides AWS SDK functionality through boto3, enabling AI assistants and chatbots to interact with AWS services seamlessly.
 
 ## Overview
@@ -32,7 +38,7 @@ git clone https://github.com/dhakalu/aws-mcp.git
 cd aws-mcp
 
 # Install dependencies
-uv install -e .
+uv sync
 ```
 
 ## Configuration
@@ -122,8 +128,7 @@ aws-mcp/
 │   │   │   ├── lambda_.py
 │   │   │   └── ...
 │   │   └── utils/
-│   │       ├── auth.py  # AWS authentication
-│   │       └── helpers.py
+│   │       └── auth.py  # AWS authentication
 └── tests/
     └── ...
 ```
@@ -132,13 +137,21 @@ aws-mcp/
 
 ```bash
 # Install in development mode
-uv pip install -e ".[dev]"
+uv sync --extra dev
 
 # Run tests
-pytest
+uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=aws_mcp
+
+# Run linting and formatting
+uv run ruff check src/ tests/
+uv run black --check src/ tests/
+uv run mypy src/
 
 # Run the MCP server
-python main.py
+uv run main.py
 ```
 
 ## Contributing
@@ -156,6 +169,36 @@ python main.py
 - Update documentation for new features
 - Ensure proper error handling and logging
 - Use type hints throughout the codebase
+
+### Code Quality
+
+The project uses several tools to maintain code quality:
+
+```bash
+# Format imports and code
+uv run isort src/ tests/
+uv run black src/ tests/
+
+# Lint code
+uv run ruff check src/ tests/
+
+# Type checking
+uv run mypy src/
+
+# Run all quality checks
+uv run ruff check src/ tests/ && \
+uv run black --check src/ tests/ && \
+uv run isort --check-only src/ tests/ && \
+uv run mypy src/
+```
+
+All pull requests must pass the CI pipeline which includes:
+- ✅ Code formatting (Black, isort)
+- ✅ Linting (Ruff)
+- ✅ Type checking (MyPy)
+- ✅ Tests (pytest with coverage)
+- ✅ Security scanning (safety, bandit)
+- ✅ Package building and installation tests
 
 ## Requirements
 
