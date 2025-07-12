@@ -2,7 +2,7 @@
 Tests for the AWS MCP Server core functionality.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 

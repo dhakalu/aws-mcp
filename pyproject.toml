@@ -116,11 +116,13 @@ ignore_missing_imports = true
 [tool.ruff]
 target-version = "py313"
 line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
     "F",  # pyflakes
-    "I",  # isort
+    # "I",  # isort - disabled to avoid conflict with standalone isort
     "B",  # flake8-bugbear
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
@@ -131,7 +133,7 @@ ignore = [
     "C901",  # too complex
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 
 # Pytest configuration

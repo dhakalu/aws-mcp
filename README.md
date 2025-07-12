@@ -128,8 +128,7 @@ aws-mcp/
 │   │   │   ├── lambda_.py
 │   │   │   └── ...
 │   │   └── utils/
-│   │       ├── auth.py  # AWS authentication
-│   │       └── helpers.py
+│   │       └── auth.py  # AWS authentication
 └── tests/
     └── ...
 ```

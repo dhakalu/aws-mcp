@@ -47,7 +47,7 @@ def validate_aws_resource_name(name: str, resource_type: str) -> bool:
     if resource_type == "s3":
         return (
             3 <= len(name) <= 63
-            and re.match(r"^[a-z0-9.-]+$", name)
+            and bool(re.match(r"^[a-z0-9.-]+$", name))
             and not name.startswith(".")
             and not name.endswith(".")
             and ".." not in name
@@ -55,14 +55,14 @@ def validate_aws_resource_name(name: str, resource_type: str) -> bool:
 
     # Lambda function naming rules
     elif resource_type == "lambda":
-        return 1 <= len(name) <= 64 and re.match(r"^[a-zA-Z0-9-_]+$", name)
+        return 1 <= len(name) <= 64 and bool(re.match(r"^[a-zA-Z0-9-_]+$", name))
 
     # EC2 instance name (tag value)
     elif resource_type == "ec2":
         return len(name) <= 255  # EC2 tag values can be up to 255 characters
 
     # Default validation
-    return re.match(r"^[a-zA-Z0-9-_]+$", name) is not None
+    return bool(re.match(r"^[a-zA-Z0-9-_]+$", name))
 
 
 def parse_s3_uri(s3_uri: str) -> Optional[Dict[str, str]]:

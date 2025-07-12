@@ -6,7 +6,7 @@ natural language commands via the Model Context Protocol.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # TODO: Import boto3 when dependencies are added
 # import boto3
@@ -32,7 +32,7 @@ class EC2Handler:
         # self.ec2_resource = boto3.resource('ec2', region_name=region)
         logger.info(f"EC2 handler initialized for region: {region}")
 
-    async def list_instances(self) -> List[Dict[str, Any]]:
+    async def list_instances(self) -> list[dict[str, Any]]:
         """
         List all EC2 instances in the account.
 
@@ -50,7 +50,7 @@ class EC2Handler:
             }
         ]
 
-    async def start_instance(self, instance_id: str) -> Dict[str, Any]:
+    async def start_instance(self, instance_id: str) -> dict[str, Any]:
         """
         Start an EC2 instance.
 
@@ -64,7 +64,7 @@ class EC2Handler:
         # TODO: Implement actual instance start
         return {"instance_id": instance_id, "action": "start", "status": "initiated"}
 
-    async def stop_instance(self, instance_id: str) -> Dict[str, Any]:
+    async def stop_instance(self, instance_id: str) -> dict[str, Any]:
         """
         Stop an EC2 instance.
 
@@ -78,7 +78,7 @@ class EC2Handler:
         # TODO: Implement actual instance stop
         return {"instance_id": instance_id, "action": "stop", "status": "initiated"}
 
-    async def get_instance_status(self, instance_id: str) -> Dict[str, Any]:
+    async def get_instance_status(self, instance_id: str) -> dict[str, Any]:
         """
         Get the status of an EC2 instance.
 
@@ -92,7 +92,7 @@ class EC2Handler:
         # TODO: Implement actual status check
         return {"instance_id": instance_id, "state": "running", "status_check": "ok"}
 
-    async def find_instance_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+    async def find_instance_by_name(self, name: str) -> dict[str, Any] | None:
         """
         Find an instance by its Name tag.
 

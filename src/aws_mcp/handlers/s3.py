@@ -6,7 +6,7 @@ natural language commands via the Model Context Protocol.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # TODO: Import boto3 when dependencies are added
 # import boto3
@@ -32,7 +32,7 @@ class S3Handler:
         # self.s3_resource = boto3.resource('s3', region_name=region)
         logger.info(f"S3 handler initialized for region: {region}")
 
-    async def list_buckets(self) -> List[Dict[str, Any]]:
+    async def list_buckets(self) -> list[dict[str, Any]]:
         """
         List all S3 buckets in the account.
 
@@ -45,7 +45,7 @@ class S3Handler:
             {"name": "my-bucket", "creation_date": "2025-01-01T00:00:00Z", "region": self.region}
         ]
 
-    async def list_objects(self, bucket_name: str, prefix: str = "") -> List[Dict[str, Any]]:
+    async def list_objects(self, bucket_name: str, prefix: str = "") -> list[dict[str, Any]]:
         """
         List objects in an S3 bucket.
 
@@ -69,7 +69,7 @@ class S3Handler:
 
     async def upload_file(
         self, bucket_name: str, file_path: str, object_key: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Upload a file to S3.
 
@@ -87,7 +87,7 @@ class S3Handler:
 
     async def download_file(
         self, bucket_name: str, object_key: str, file_path: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Download a file from S3.
 
@@ -108,7 +108,7 @@ class S3Handler:
             "status": "downloaded",
         }
 
-    async def delete_object(self, bucket_name: str, object_key: str) -> Dict[str, Any]:
+    async def delete_object(self, bucket_name: str, object_key: str) -> dict[str, Any]:
         """
         Delete an object from S3.
 

@@ -15,8 +15,7 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from aws_mcp.server import create_server
-from aws_mcp.utils.helpers import setup_logging
+from aws_mcp.server import create_server, setup_logging
 from aws_mcp.utils.auth import AWSAuth, get_default_region
 
 

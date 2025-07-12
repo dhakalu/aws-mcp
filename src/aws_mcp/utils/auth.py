@@ -7,7 +7,7 @@ for secure access to AWS services.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 # TODO: Import boto3 when dependencies are added
 # import boto3
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class AWSAuth:
     """AWS authentication and credential management."""
 
-    def __init__(self, region: str = "us-east-1", profile: Optional[str] = None):
+    def __init__(self, region: str = "us-east-1", profile: str | None = None):
         """
         Initialize AWS authentication.
 
@@ -34,7 +34,7 @@ class AWSAuth:
         # self.session = self._create_session()
         logger.info(f"AWS auth initialized for region: {region}")
 
-    def _create_session(self):
+    def _create_session(self) -> None:
         """
         Create a boto3 session with appropriate credentials.
 
@@ -59,7 +59,7 @@ class AWSAuth:
         #     raise
         pass
 
-    def get_credentials(self) -> Dict[str, Any]:
+    def get_credentials(self) -> dict[str, Any]:
         """
         Get current AWS credentials information.
 
@@ -79,7 +79,7 @@ class AWSAuth:
         #     return {}
         return {"region": self.region, "profile": self.profile, "status": "configured"}
 
-    def create_client(self, service_name: str):
+    def create_client(self, service_name: str) -> None:
         """
         Create a boto3 client for the specified service.
 
@@ -94,7 +94,7 @@ class AWSAuth:
         logger.info(f"Would create {service_name} client")
         return None
 
-    def create_resource(self, service_name: str):
+    def create_resource(self, service_name: str) -> None:
         """
         Create a boto3 resource for the specified service.
 

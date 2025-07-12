@@ -5,9 +5,8 @@ This module provides functionality for managing AWS Lambda functions through
 natural language commands via the Model Context Protocol.
 """
 
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # TODO: Import boto3 when dependencies are added
 # import boto3
@@ -32,7 +31,7 @@ class LambdaHandler:
         # self.lambda_client = boto3.client('lambda', region_name=region)
         logger.info(f"Lambda handler initialized for region: {region}")
 
-    async def list_functions(self) -> List[Dict[str, Any]]:
+    async def list_functions(self) -> list[dict[str, Any]]:
         """
         List all Lambda functions in the account.
 
@@ -51,8 +50,8 @@ class LambdaHandler:
         ]
 
     async def invoke_function(
-        self, function_name: str, payload: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, function_name: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Invoke a Lambda function.
 
@@ -72,7 +71,7 @@ class LambdaHandler:
             "execution_duration": 1500,
         }
 
-    async def get_function_info(self, function_name: str) -> Dict[str, Any]:
+    async def get_function_info(self, function_name: str) -> dict[str, Any]:
         """
         Get information about a Lambda function.
 
@@ -93,7 +92,7 @@ class LambdaHandler:
             "last_modified": "2025-01-01T00:00:00Z",
         }
 
-    async def get_function_logs(self, function_name: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_function_logs(self, function_name: str, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get recent logs for a Lambda function.
 
@@ -114,7 +113,7 @@ class LambdaHandler:
             }
         ]
 
-    async def update_function_code(self, function_name: str, zip_file: bytes) -> Dict[str, Any]:
+    async def update_function_code(self, function_name: str, zip_file: bytes) -> dict[str, Any]:
         """
         Update the code for a Lambda function.
 
