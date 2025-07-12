@@ -12,6 +12,7 @@ help:
 	@echo "  lint-fix    Fix code style and linting issues"
 	@echo "  test        Run test suite with coverage"
 	@echo "  scan        Run security scans"
+	@echo "  check       Run all quality checks (lint + test)"
 	@echo "  install     Install package in production mode"
 	@echo "  dev-install Install package in development mode"
 	@echo "  build       Build package distributions"
@@ -45,12 +46,23 @@ test:
 scan:
 	@echo "🔒 Running security scans..."
 	@echo "🛡️  Checking for known vulnerabilities..."
-	uv run pip install safety
+	uv add --dev safety
 	uv run safety check --json || echo "⚠️  Safety check completed with warnings"
 	@echo "🔐 Running security linter..."
-	uv run pip install bandit
+	uv add --dev bandit
 	uv run bandit -r src/ -f json || echo "⚠️  Bandit scan completed with warnings"
 	@echo "✅ Security scans completed!"
+
+check: lint test scan 
+	@echo "✅ All quality checks passed!"
+
+start:
+	@echo "🚀 Starting AWS MCP Server..."
+	npx @modelcontextprotocol/inspector uvx mcp_aws 
+
+run:
+	@echo "🚀 Running AWS MCP Server..."
+	uv run main.py
 
 # Install package in production mode
 install:

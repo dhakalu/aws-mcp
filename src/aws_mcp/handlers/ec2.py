@@ -8,10 +8,8 @@ natural language commands via the Model Context Protocol.
 import logging
 from typing import Any
 
-# TODO: Import boto3 when dependencies are added
-# import boto3
-# from botocore.exceptions import ClientError, NoCredentialsError
-
+import boto3
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
@@ -27,81 +25,115 @@ class EC2Handler:
             region: AWS region to operate in
         """
         self.region = region
-        # TODO: Initialize boto3 EC2 client
-        # self.ec2_client = boto3.client('ec2', region_name=region)
-        # self.ec2_resource = boto3.resource('ec2', region_name=region)
+        self.client = boto3.client("ec2", region_name=region)
         logger.info(f"EC2 handler initialized for region: {region}")
 
-    async def list_instances(self) -> list[dict[str, Any]]:
+    def list_instances(self, state: str = "all") -> dict[str, Any]:
         """
-        List all EC2 instances in the account.
+        List EC2 instances in the region.
+
+        Args:
+            state: Instance state filter ('running', 'stopped', 'pending', 'terminated', 'all')
 
         Returns:
-            List of instance details
+            Dictionary containing instance information
         """
-        logger.info("Listing EC2 instances")
-        # TODO: Implement actual EC2 instance listing
-        return [
-            {
-                "instance_id": "i-1234567890abcdef0",
-                "state": "running",
-                "instance_type": "t3.micro",
-                "name": "web-server",
+        try:
+            filters = []
+            if state != "all":
+                filters.append({"Name": "instance-state-name", "Values": [state]})
+
+            response = self.client.describe_instances(Filters=filters)
+
+            instances = []
+            for reservation in response["Reservations"]:
+                for instance in reservation["Instances"]:
+                    instance_info = {
+                        "InstanceId": instance["InstanceId"],
+                        "InstanceType": instance["InstanceType"],
+                        "State": instance["State"]["Name"],
+                        "LaunchTime": instance["LaunchTime"].isoformat(),
+                        "AvailabilityZone": instance["Placement"]["AvailabilityZone"],
+                    }
+
+                    # Add name tag if available
+                    name = "N/A"
+                    for tag in instance.get("Tags", []):
+                        if tag["Key"] == "Name":
+                            name = tag["Value"]
+                            break
+                    instance_info["Name"] = name
+
+                    # Add IP addresses if available
+                    if "PublicIpAddress" in instance:
+                        instance_info["PublicIP"] = instance["PublicIpAddress"]
+                    if "PrivateIpAddress" in instance:
+                        instance_info["PrivateIP"] = instance["PrivateIpAddress"]
+
+                    instances.append(instance_info)
+
+            logger.info(f"Listed {len(instances)} EC2 instances with state '{state}'")
+            return {"instances": instances, "count": len(instances)}
+
+        except ClientError as e:
+            logger.error(f"Failed to list EC2 instances: {e}")
+            return {"error": str(e), "instances": [], "count": 0}
+        except Exception as e:
+            logger.error(f"Unexpected error listing EC2 instances: {e}")
+            return {"error": str(e), "instances": [], "count": 0}
+
+    def describe_instance(self, instance_id: str) -> dict[str, Any]:
+        """
+        Get detailed information about a specific EC2 instance.
+
+        Args:
+            instance_id: The EC2 instance ID
+
+        Returns:
+            Dictionary containing detailed instance information
+        """
+        try:
+            response = self.client.describe_instances(InstanceIds=[instance_id])
+
+            if not response["Reservations"]:
+                return {"error": f"Instance {instance_id} not found"}
+
+            instance = response["Reservations"][0]["Instances"][0]
+
+            # Extract relevant information
+            instance_info = {
+                "InstanceId": instance["InstanceId"],
+                "InstanceType": instance["InstanceType"],
+                "State": instance["State"]["Name"],
+                "StateReason": instance.get("StateReason", {}).get("Message", "N/A"),
+                "LaunchTime": instance["LaunchTime"].isoformat(),
+                "Platform": instance.get("Platform", "Linux/Unix"),
+                "Architecture": instance["Architecture"],
+                "VpcId": instance.get("VpcId"),
+                "SubnetId": instance.get("SubnetId"),
+                "AvailabilityZone": instance["Placement"]["AvailabilityZone"],
+                "SecurityGroups": [sg["GroupName"] for sg in instance["SecurityGroups"]],
+                "KeyName": instance.get("KeyName"),
             }
-        ]
 
-    async def start_instance(self, instance_id: str) -> dict[str, Any]:
-        """
-        Start an EC2 instance.
+            # Add name tag if available
+            for tag in instance.get("Tags", []):
+                if tag["Key"] == "Name":
+                    instance_info["Name"] = tag["Value"]
+                    break
 
-        Args:
-            instance_id: The instance ID to start
+            # Add IP addresses if available
+            if "PublicIpAddress" in instance:
+                instance_info["PublicIP"] = instance["PublicIpAddress"]
+            if "PrivateIpAddress" in instance:
+                instance_info["PrivateIP"] = instance["PrivateIpAddress"]
 
-        Returns:
-            Operation result
-        """
-        logger.info(f"Starting instance: {instance_id}")
-        # TODO: Implement actual instance start
-        return {"instance_id": instance_id, "action": "start", "status": "initiated"}
+            logger.info(f"Retrieved details for instance {instance_id}")
+            return instance_info
 
-    async def stop_instance(self, instance_id: str) -> dict[str, Any]:
-        """
-        Stop an EC2 instance.
-
-        Args:
-            instance_id: The instance ID to stop
-
-        Returns:
-            Operation result
-        """
-        logger.info(f"Stopping instance: {instance_id}")
-        # TODO: Implement actual instance stop
-        return {"instance_id": instance_id, "action": "stop", "status": "initiated"}
-
-    async def get_instance_status(self, instance_id: str) -> dict[str, Any]:
-        """
-        Get the status of an EC2 instance.
-
-        Args:
-            instance_id: The instance ID to check
-
-        Returns:
-            Instance status information
-        """
-        logger.info(f"Getting status for instance: {instance_id}")
-        # TODO: Implement actual status check
-        return {"instance_id": instance_id, "state": "running", "status_check": "ok"}
-
-    async def find_instance_by_name(self, name: str) -> dict[str, Any] | None:
-        """
-        Find an instance by its Name tag.
-
-        Args:
-            name: The instance name to search for
-
-        Returns:
-            Instance details if found, None otherwise
-        """
-        logger.info(f"Finding instance by name: {name}")
-        # TODO: Implement actual name-based search
-        return {"instance_id": "i-1234567890abcdef0", "name": name, "state": "running"}
+        except ClientError as e:
+            logger.error(f"Failed to describe instance {instance_id}: {e}")
+            return {"error": str(e)}
+        except Exception as e:
+            logger.error(f"Unexpected error describing instance {instance_id}: {e}")
+            return {"error": str(e)}

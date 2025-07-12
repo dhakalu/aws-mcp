@@ -18,9 +18,18 @@ Model Context Protocol is a standard for connecting AI assistants with external 
 
 ## Features
 
+🚀 **Current Features:**
+- **MCP Protocol Support**: Full Model Context Protocol server implementation
+- **EC2 Management**: List and describe EC2 instances
+- **AWS Authentication**: Secure credential validation and management
+- **Tool-based Interface**: Structured tools for AI assistant integration
+
+🔧 **Implemented Tools:**
+- `list_ec2_instances`: List EC2 instances with optional state filtering
+- `describe_ec2_instance`: Get detailed information about a specific EC2 instance
+
 🚀 **Planned Features:**
-- **EC2 Management**: Start, stop, and monitor EC2 instances
-- **S3 Operations**: Upload, download, and manage S3 objects and buckets
+- **S3 Operations**: List S3 buckets in your account
 - **Lambda Functions**: Deploy and invoke Lambda functions
 - **CloudWatch Monitoring**: Query metrics and logs
 - **IAM Management**: Manage users, roles, and policies
@@ -81,25 +90,45 @@ Add this server to your MCP-compatible client configuration:
 
 ## Usage Examples
 
-Once configured, you can interact with AWS services through natural language:
+Once configured, you can interact with AWS services through natural language via MCP-compatible clients:
 
-### EC2 Operations
-- "List all my EC2 instances"
-- "Start the instance named 'web-server'"
-- "Show me the status of instance i-1234567890abcdef0"
+### Available Tools
 
-### S3 Operations
-- "Upload file.txt to my-bucket"
-- "List all files in my-documents bucket"
-- "Download report.pdf from analytics-bucket"
+#### EC2 Operations
+- **list_ec2_instances**: "List all my EC2 instances" or "Show running instances"
+  - Optional parameter: `state` (running, stopped, pending, terminated, all)
+- **describe_ec2_instance**: "Show details for instance i-1234567890abcdef0"
+  - Required parameter: `instance_id`
 
-### Lambda Functions
-- "Invoke the data-processor function with this payload"
-- "Show me the logs for the last execution of my-lambda"
+#### S3 Operations  
+- **list_s3_buckets**: "List all my S3 buckets" or "Show me my buckets"
 
-### CloudWatch
-- "Show CPU utilization for my EC2 instances"
-- "Get error logs from the last hour"
+### Example Tool Calls
+
+```json
+{
+  "tool": "list_ec2_instances",
+  "arguments": {
+    "state": "running"
+  }
+}
+```
+
+```json
+{
+  "tool": "describe_ec2_instance", 
+  "arguments": {
+    "instance_id": "i-1234567890abcdef0"
+  }
+}
+```
+
+```json
+{
+  "tool": "list_s3_buckets",
+  "arguments": {}
+}
+```
 
 ## Security Considerations
 
@@ -230,9 +259,13 @@ Detailed logging is available for troubleshooting:
 
 ## Roadmap
 
-- [ ] Core MCP server implementation
-- [ ] EC2 service integration
-- [ ] S3 service integration
+- [x] Core MCP server implementation
+- [x] EC2 service integration (list, describe)
+- [x] S3 service integration (list buckets)
+- [x] AWS authentication and credential validation
+- [x] Tool-based interface for AI assistants
+- [ ] EC2 instance control (start, stop, reboot)
+- [ ] S3 object operations (upload, download, delete)
 - [ ] Lambda service integration
 - [ ] CloudWatch integration
 - [ ] IAM management features

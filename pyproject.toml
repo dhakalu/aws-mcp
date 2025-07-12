@@ -11,8 +11,7 @@ requires-python = ">=3.13"
 dependencies = [
     "boto3>=1.34.0",
     "botocore>=1.34.0",
-    # TODO: Add MCP dependencies when available
-    # "mcp>=1.0.0",
+    "mcp>=1.11.0",
 ]
 
 [project.optional-dependencies]
@@ -146,3 +145,9 @@ packages = ["src/aws_mcp"]
 
 [tool.hatch.build.editable]
 packages = ["src/aws_mcp"]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.6",
+    "safety>=3.6.0",
+]

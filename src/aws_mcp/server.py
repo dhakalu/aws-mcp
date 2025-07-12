@@ -6,28 +6,12 @@ AI assistants and AWS services.
 """
 
 import logging
-from typing import Any
 
-# TODO: Import MCP dependencies when available
-# from mcp import McpServer, McpServerContext
+from mcp.server.fastmcp import FastMCP
 
+from aws_mcp.utils import get_default_region
 
 logger = logging.getLogger(__name__)
-
-
-def setup_logging(level: str = "INFO") -> None:
-    """
-    Set up logging configuration for the MCP server.
-
-    Args:
-        level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    """
-    logging.basicConfig(
-        level=getattr(logging, level.upper()),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    logger.info(f"Logging initialized at {level} level")
 
 
 class AWSSMCPServer:
@@ -38,63 +22,122 @@ class AWSSMCPServer:
     allowing natural language interactions with cloud infrastructure.
     """
 
-    def __init__(self, region: str = "us-east-1") -> None:
+    def __init__(self) -> None:
         """
         Initialize the AWS MCP Server.
-
-        Args:
-            region: AWS region to operate in
         """
-        self.region = region
-        self.handlers: dict[str, Any] = {}
-        logger.info(f"Initializing AWS MCP Server for region: {region}")
+        self.region = get_default_region()
+        self.mcp_server: FastMCP = FastMCP("aws-mcp")
+        self._register_tools()
+
+    def _register_tools(self) -> None:
+        """Set up MCP protocol handlers."""
+
+        @self.mcp_server.tool(
+            name="list_ec2_instances",
+            description="List EC2 instances in the current region",
+        )
+        async def list_ec2_instances(state: str = "all") -> str:
+            return await self._list_ec2_instances(state)
+
+        @self.mcp_server.tool(
+            name="describe_ec2_instance",
+            description="Get detailed information about a specific EC2 instance",
+        )
+        async def describe_ec2_instance(instance_id: str) -> str:
+            return await self._describe_ec2_instance(instance_id)
+
+    async def _list_ec2_instances(self, state: str = "all") -> str:
+        """List EC2 instances using boto3."""
+        try:
+            from aws_mcp.handlers.ec2 import EC2Handler
+
+            handler = EC2Handler(self.region)
+            result = handler.list_instances(state)
+
+            if "error" in result:
+                return f"Error listing EC2 instances: {result['error']}"
+
+            instances = result["instances"]
+            if not instances:
+                return f"No EC2 instances found in {self.region} with state '{state}'"
+
+            # Format the response
+            response = f"Found {result['count']} EC2 instance(s) in {self.region}:\n\n"
+            for instance in instances:
+                response += f"• {instance['InstanceId']} ({instance['Name']})\n"
+                response += f"  Type: {instance['InstanceType']}\n"
+                response += f"  State: {instance['State']}\n"
+                response += f"  Zone: {instance['AvailabilityZone']}\n"
+                if "PublicIP" in instance:
+                    response += f"  Public IP: {instance['PublicIP']}\n"
+                if "PrivateIP" in instance:
+                    response += f"  Private IP: {instance['PrivateIP']}\n"
+                response += "\n"
+
+            return response.strip()
+
+        except Exception as e:
+            logger.error(f"Error in _list_ec2_instances: {e}")
+            return f"Error listing EC2 instances: {str(e)}"
+
+    async def _describe_ec2_instance(self, instance_id: str) -> str:
+        """Describe a specific EC2 instance using boto3."""
+        try:
+            from aws_mcp.handlers.ec2 import EC2Handler
+
+            handler = EC2Handler(self.region)
+            result = handler.describe_instance(instance_id)
+
+            if "error" in result:
+                return f"Error describing instance {instance_id}: {result['error']}"
+
+            # Format the detailed response
+            response = f"EC2 Instance Details for {instance_id}:\n\n"
+            response += f"Name: {result.get('Name', 'N/A')}\n"
+            response += f"Instance Type: {result['InstanceType']}\n"
+            response += f"State: {result['State']}\n"
+            response += f"State Reason: {result['StateReason']}\n"
+            response += f"Platform: {result['Platform']}\n"
+            response += f"Architecture: {result['Architecture']}\n"
+            response += f"Availability Zone: {result['AvailabilityZone']}\n"
+            response += f"Launch Time: {result['LaunchTime']}\n"
+
+            if result.get("VpcId"):
+                response += f"VPC ID: {result['VpcId']}\n"
+            if result.get("SubnetId"):
+                response += f"Subnet ID: {result['SubnetId']}\n"
+            if result.get("PublicIP"):
+                response += f"Public IP: {result['PublicIP']}\n"
+            if result.get("PrivateIP"):
+                response += f"Private IP: {result['PrivateIP']}\n"
+            if result.get("KeyName"):
+                response += f"Key Pair: {result['KeyName']}\n"
+
+            if result.get("SecurityGroups"):
+                response += f"Security Groups: {', '.join(result['SecurityGroups'])}\n"
+
+            return response.strip()
+
+        except Exception as e:
+            logger.error(f"Error in _describe_ec2_instance: {e}")
+            return f"Error describing instance {instance_id}: {str(e)}"
 
     async def start(self) -> None:
-        """Start the MCP server."""
-        logger.info("Starting AWS MCP Server...")
-        # TODO: Implement MCP server startup logic
-        pass
+        """Start the MCP server using http transport."""
+        await self.mcp_server.run_streamable_http_async()
 
     async def stop(self) -> None:
         """Stop the MCP server."""
         logger.info("Stopping AWS MCP Server...")
-        # TODO: Implement MCP server shutdown logic
-        pass
-
-    def register_handler(self, service: str, handler: Any) -> None:
-        """
-        Register a service handler.
-
-        Args:
-            service: AWS service name (e.g., 'ec2', 's3', 'lambda')
-            handler: Handler instance for the service
-        """
-        self.handlers[service] = handler
-        logger.info(f"Registered handler for {service}")
-
-    async def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
-        """
-        Handle an incoming MCP request.
-
-        Args:
-            request: The MCP request payload
-
-        Returns:
-            The response payload
-        """
-        # TODO: Implement request routing and handling
-        logger.info(f"Handling request: {request}")
-        return {"status": "success", "message": "Request handled"}
+        # The server will stop when the stdio streams are closed
 
 
-def create_server(region: str = "us-east-1") -> AWSSMCPServer:
+async def run() -> None:
     """
-    Factory function to create and configure an AWS MCP Server.
+    Run the MCP server using stdio transport.
 
-    Args:
-        region: AWS region to operate in
-
-    Returns:
-        Configured AWSSMCPServer instance
+    This is the main entry point for the MCP server.
     """
-    return AWSSMCPServer(region=region)
+    server = AWSSMCPServer()
+    await server.start()
