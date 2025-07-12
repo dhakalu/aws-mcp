@@ -5,18 +5,19 @@ Tests for AWS utility functions.
 import os
 from unittest.mock import patch
 
+from aws_mcp.utils.auth import AWSAuth, get_default_region
+from aws_mcp.utils.helpers import (
+    build_error_response,
+    build_success_response,
+    extract_instance_id,
+    format_file_size,
+    parse_s3_uri,
+    validate_aws_resource_name,
+)
+
 # TODO: Import when dependencies are available
 # import pytest
 
-from aws_mcp.utils.helpers import (
-    validate_aws_resource_name,
-    parse_s3_uri,
-    format_file_size,
-    extract_instance_id,
-    build_error_response,
-    build_success_response,
-)
-from aws_mcp.utils.auth import get_default_region, AWSAuth
 
 
 class TestHelpers:

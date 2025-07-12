@@ -7,7 +7,7 @@ for secure access to AWS services.
 
 import logging
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 # TODO: Import boto3 when dependencies are added
 # import boto3
