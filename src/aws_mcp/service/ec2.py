@@ -61,12 +61,6 @@ class InstanceDetailInfo(TypedDict):
     PrivateIP: NotRequired[str]
 
 
-class InstanceDetailResponse(InstanceDetailInfo):
-    """TypedDict for describe instance response."""
-
-    pass
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -139,7 +133,7 @@ class EC2Service:
         result: InstanceListResponse = {"Instances": instances, "Count": len(instances)}
         return result
 
-    def describe_instance(self, instance_id: str) -> InstanceDetailResponse:
+    def describe_instance(self, instance_id: str) -> InstanceDetailInfo:
         """
         Get detailed information about a specific EC2 instance.
 
@@ -147,7 +141,7 @@ class EC2Service:
             instance_id: The EC2 instance ID
 
         Returns:
-            InstanceDetailResponse containing detailed instance information
+            InstanceDetailInfo containing detailed instance information
 
         Raises:
             ClientError: If AWS API call fails
@@ -169,7 +163,7 @@ class EC2Service:
                 break
 
         # Extract relevant information
-        instance_info: InstanceDetailResponse = {
+        instance_info: InstanceDetailInfo = {
             "InstanceId": instance["InstanceId"],
             "InstanceType": instance["InstanceType"],
             "State": instance["State"]["Name"],

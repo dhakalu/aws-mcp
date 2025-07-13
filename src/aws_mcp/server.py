@@ -37,8 +37,7 @@ async def describe_ec2_instance(region: str, instance_id: str) -> str:
 
 async def run() -> None:
     """
-    Run the MCP server using stdio transport.
-
-    This is the main entry point for the MCP server.
+    Run the MCP server using streamable HTTP transport.
+    This function starts the server and listens for incoming requests.
     """
     await mcp_server.run_streamable_http_async()
