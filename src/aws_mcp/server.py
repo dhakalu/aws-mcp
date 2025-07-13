@@ -5,6 +5,7 @@ This module implements the main MCP server that handles communication between
 AI assistants and AWS services.
 """
 
+import json
 import logging
 
 from mcp.server.fastmcp import FastMCP
