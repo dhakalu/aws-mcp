@@ -1,8 +1,10 @@
 """
-EC2 service handler for AWS MCP Server.
+EC2 service facade for AWS MCP Server.
 
-This module provides functionality for managing EC2 instances through
-natural language commands via the Model Context Protocol.
+This module provides a simplified facade over boto3 EC2 client interactions,
+offering type-safe methods for common EC2 operations with structured responses.
+The facade pattern abstracts away boto3 complexity and provides consistent
+error handling and data transformation.
 """
 
 import logging
@@ -68,12 +70,12 @@ class InstanceDetailResponse(InstanceDetailInfo):
 logger = logging.getLogger(__name__)
 
 
-class EC2Handler:
-    """Handler for Amazon EC2 operations."""
+class EC2Service:
+    """Service for Amazon EC2 operations that manages EC2 instances using boto3."""
 
     def __init__(self, region: str = "us-east-1", client: EC2ClientProtocol | None = None):
         """
-        Initialize the EC2 handler.
+        Initialize the EC2 service.
 
         Args:
             region: AWS region to operate in
@@ -81,7 +83,7 @@ class EC2Handler:
         """
         self.region = region
         self.client = client or boto3.client("ec2", region_name=region)
-        logger.info(f"EC2 handler initialized for region: {region}")
+        logger.info(f"EC2 service initialized for region: {region}")
 
     def list_instances(self, state: str = "all") -> InstanceListResponse:
         """

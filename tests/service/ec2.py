@@ -1,5 +1,5 @@
 """
-Unit tests for EC2Handler class.
+Unit tests for EC2Service class.
 
 Tests cover all functionality with mocked AWS clients to ensure
 reliable testing without actual AWS API calls.
@@ -11,35 +11,35 @@ from unittest.mock import Mock
 import pytest
 from botocore.exceptions import ClientError
 
-from aws_mcp.handlers.ec2 import (
-    EC2Handler,
+from aws_mcp.service.ec2 import (
+    EC2Service,
 )
 
 
-class TestEC2Handler:
-    """Test cases for EC2Handler class."""
+class TestEC2Service:
+    """Test cases for EC2Service class."""
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
         self.mock_client = Mock()
-        self.handler = EC2Handler(region="us-east-1", client=self.mock_client)
+        self.handler = EC2Service(region="us-east-1", client=self.mock_client)
 
     def test_initialization_default_region(self):
-        """Test EC2Handler initialization with default region."""
-        handler = EC2Handler()
+        """Test EC2Service initialization with default region."""
+        handler = EC2Service()
         assert handler.region == "us-east-1"
         # Client should be created with default region
         assert handler.client is not None
 
     def test_initialization_custom_region(self):
-        """Test EC2Handler initialization with custom region."""
-        handler = EC2Handler(region="eu-west-1")
+        """Test EC2Service initialization with custom region."""
+        handler = EC2Service(region="eu-west-1")
         assert handler.region == "eu-west-1"
 
     def test_initialization_with_injected_client(self):
-        """Test EC2Handler initialization with dependency injection."""
+        """Test EC2Service initialization with dependency injection."""
         mock_client = Mock()
-        handler = EC2Handler(region="us-west-2", client=mock_client)
+        handler = EC2Service(region="us-west-2", client=mock_client)
         assert handler.region == "us-west-2"
         assert handler.client is mock_client
 
@@ -325,13 +325,13 @@ class TestEC2Handler:
         assert result["Platform"] == "windows"
 
 
-class TestEC2HandlerIntegration:
+class TestEC2ServiceIntegration:
     """Integration-style tests that test the full flow without mocking internal methods."""
 
     def test_full_workflow_with_mock_client(self):
         """Test a complete workflow using a mock client."""
         mock_client = Mock()
-        handler = EC2Handler(region="us-west-2", client=mock_client)
+        handler = EC2Service(region="us-west-2", client=mock_client)
 
         # Setup mock responses
         list_response = {
@@ -389,17 +389,17 @@ class TestEC2HandlerIntegration:
 
 
 """
-Additional test fixtures and utilities for EC2Handler testing.
+Additional test fixtures and utilities for EC2Service testing.
 """
 
 
-class TestEC2HandlerEdgeCases:
-    """Test edge cases and error conditions for EC2Handler."""
+class TestEC2ServiceEdgeCases:
+    """Test edge cases and error conditions for EC2Service."""
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
         self.mock_client = Mock()
-        self.handler = EC2Handler(region="us-east-1", client=self.mock_client)
+        self.handler = EC2Service(region="us-east-1", client=self.mock_client)
 
     def test_list_instances_malformed_response(self):
         """Test handling of malformed AWS API response."""
@@ -523,13 +523,13 @@ def sample_reservation(sample_instance_data):
     return {"Reservations": [{"Instances": [sample_instance_data]}]}
 
 
-class TestEC2HandlerWithFixtures:
+class TestEC2ServiceWithFixtures:
     """Tests using pytest fixtures for cleaner test data."""
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
         self.mock_client = Mock()
-        self.handler = EC2Handler(region="us-east-1", client=self.mock_client)
+        self.handler = EC2Service(region="us-east-1", client=self.mock_client)
 
     def test_list_instances_with_fixture(self, sample_reservation):
         """Test list_instances using sample data fixture."""

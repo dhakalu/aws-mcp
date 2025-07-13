@@ -1,7 +1,7 @@
 """
 AWS MCP Server implementation.
 
-This module contains the main MCP server that handles communication between
+This module implements the main MCP server that handles communication between
 AI assistants and AWS services.
 """
 
@@ -48,88 +48,6 @@ class AWSSMCPServer:
         async def describe_ec2_instance(instance_id: str) -> str:
             return await self._describe_ec2_instance(instance_id)
 
-    async def _list_ec2_instances(self, state: str = "all") -> str:
-        """List EC2 instances using boto3."""
-        try:
-            from aws_mcp.handlers.ec2 import EC2Handler
-
-            handler = EC2Handler(self.region)
-            result = handler.list_instances(state)
-
-            instances = result["Instances"]
-            if not instances:
-                return json.dumps(
-                    {
-                        "Error": False,
-                        "Message": f"No EC2 instances found in {self.region} with state '{state}'",
-                        "Instances": [],
-                        "Count": 0,
-                        "Region": self.region,
-                        "StateFilter": state,
-                    }
-                )
-
-            return json.dumps(
-                {
-                    "Error": False,
-                    "Message": f"Found {result['Count']} EC2 instance(s) in {self.region}",
-                    "Instances": instances,
-                    "Count": result["Count"],
-                    "Region": self.region,
-                    "StateFilter": state,
-                }
-            )
-
-        except Exception as e:
-            logger.error(f"Error in _list_ec2_instances: {e}")
-            return json.dumps(
-                {
-                    "Error": True,
-                    "Message": f"Error listing EC2 instances: {str(e)}",
-                    "Instances": [],
-                    "Count": 0,
-                }
-            )
-
-    async def _describe_ec2_instance(self, instance_id: str) -> str:
-        """Describe a specific EC2 instance using boto3."""
-        try:
-            from aws_mcp.handlers.ec2 import EC2Handler
-
-            handler = EC2Handler(self.region)
-            result = handler.describe_instance(instance_id)
-
-            return json.dumps(
-                {
-                    "Error": False,
-                    "Message": f"Successfully retrieved details for instance {instance_id}",
-                    "Instance": result,
-                    "InstanceId": instance_id,
-                    "Region": self.region,
-                }
-            )
-
-        except ValueError as e:
-            # Instance not found
-            logger.warning(f"Instance not found: {e}")
-            return json.dumps(
-                {
-                    "Error": True,
-                    "Message": str(e),
-                    "Instance": None,
-                    "InstanceId": instance_id,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Error in _describe_ec2_instance: {e}")
-            return json.dumps(
-                {
-                    "Error": True,
-                    "Message": f"Error describing instance {instance_id}: {str(e)}",
-                    "Instance": None,
-                    "InstanceId": instance_id,
-                }
-            )
 
     async def start(self) -> None:
         """Start the MCP server using http transport."""

@@ -53,7 +53,7 @@ scan:
 	uv run bandit -r src/ -f json || echo "⚠️  Bandit scan completed with warnings"
 	@echo "✅ Security scans completed!"
 
-check: lint test scan 
+check: lint-fix lint test scan
 	@echo "✅ All quality checks passed!"
 
 start:
