@@ -27,12 +27,10 @@ async def list_ec2_instances(region: str, state: str = "all") -> str:
     return await ec2_handlers.list_ec2_instances(region, state)
 
 
-mcp_server.tool(
+@mcp_server.tool(
     name="describe_ec2_instance",
     description="Get detailed information about a specific EC2 instance",
 )
-
-
 async def describe_ec2_instance(region: str, instance_id: str) -> str:
     return await ec2_handlers.describe_ec2_instance(region, instance_id)
 
