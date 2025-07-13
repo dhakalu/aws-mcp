@@ -9,6 +9,6 @@ __version__ = "0.1.0"
 __author__ = "dhakalu"
 __email__ = "dhakal.upenn@gmail.com"
 
-from .server import AWSSMCPServer, run
+from .server import run
 
-__all__ = ["AWSSMCPServer", "run"]
+__all__ = ["run"]
