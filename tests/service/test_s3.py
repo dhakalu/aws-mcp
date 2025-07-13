@@ -5,7 +5,7 @@ Tests cover all functionality with mocked AWS clients to ensure
 reliable testing without actual AWS API calls.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import Mock
 
 import pytest
@@ -95,7 +95,7 @@ class TestS3Service:
         mock_datetime1 = datetime(2024, 1, 1, 12, 0, 0)
         mock_datetime2 = datetime(2024, 2, 1, 10, 30, 0)
         mock_datetime3 = datetime(2024, 3, 15, 8, 15, 30)
-        
+
         mock_response = {
             "Buckets": [
                 {
@@ -137,9 +137,7 @@ class TestS3Service:
     def test_list_buckets_client_error(self):
         """Test list_buckets raises ClientError when AWS API fails."""
         error_response = {"Error": {"Code": "AccessDenied", "Message": "Access denied"}}
-        self.mock_client.list_buckets.side_effect = ClientError(
-            error_response, "ListBuckets"
-        )
+        self.mock_client.list_buckets.side_effect = ClientError(error_response, "ListBuckets")
 
         with pytest.raises(ClientError):
             self.handler.list_buckets()
@@ -147,9 +145,9 @@ class TestS3Service:
     def test_list_buckets_handles_different_datetime_formats(self):
         """Test listing buckets with different datetime formats."""
         # Test with timezone-aware datetime
-        from datetime import timezone
-        mock_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-        
+
+        mock_datetime = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
+
         mock_response = {
             "Buckets": [
                 {
@@ -170,7 +168,7 @@ class TestS3Service:
     def test_list_buckets_with_special_bucket_names(self):
         """Test listing buckets with special characters in names."""
         mock_datetime = datetime(2024, 1, 1, 12, 0, 0)
-        
+
         mock_response = {
             "Buckets": [
                 {
@@ -218,7 +216,7 @@ class TestS3Service:
         assert "Count" in result
         assert isinstance(result["Buckets"], list)
         assert isinstance(result["Count"], int)
-        
+
         # Verify bucket structure matches BucketInfo TypedDict
         if result["Buckets"]:
             bucket = result["Buckets"][0]
