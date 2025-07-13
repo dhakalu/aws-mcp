@@ -10,6 +10,7 @@ import logging
 from mcp.server.fastmcp import FastMCP
 
 import aws_mcp.handlers.ec2 as ec2_handlers
+import aws_mcp.handlers.s3 as s3_handlers
 from aws_mcp.utils import get_default_region
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,14 @@ async def list_ec2_instances(region: str, state: str = "all") -> str:
 )
 async def describe_ec2_instance(region: str, instance_id: str) -> str:
     return await ec2_handlers.describe_ec2_instance(region, instance_id)
+
+
+@mcp_server.tool(
+    name="list_s3_buckets",
+    description="List S3 buckets in the current region",
+)
+async def list_s3_buckets(region: str = "us-east-1") -> str:
+    return await s3_handlers.list_s3_buckets(region)
 
 
 async def run() -> None:

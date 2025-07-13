@@ -21,15 +21,17 @@ Model Context Protocol is a standard for connecting AI assistants with external 
 🚀 **Current Features:**
 - **MCP Protocol Support**: Full Model Context Protocol server implementation
 - **EC2 Management**: List and describe EC2 instances
+- **S3 Operations**: List S3 buckets in your account
 - **AWS Authentication**: Secure credential validation and management
 - **Tool-based Interface**: Structured tools for AI assistant integration
 
 🔧 **Implemented Tools:**
 - `list_ec2_instances`: List EC2 instances with optional state filtering
 - `describe_ec2_instance`: Get detailed information about a specific EC2 instance
+- `list_s3_buckets`: List S3 buckets in the specified region
 
 🚀 **Planned Features:**
-- **S3 Operations**: List S3 buckets in your account
+- **S3 Object Operations**: Upload, download, and manage S3 objects
 - **Lambda Functions**: Deploy and invoke Lambda functions
 - **CloudWatch Monitoring**: Query metrics and logs
 - **IAM Management**: Manage users, roles, and policies
@@ -97,11 +99,14 @@ Once configured, you can interact with AWS services through natural language via
 #### EC2 Operations
 - **list_ec2_instances**: "List all my EC2 instances" or "Show running instances"
   - Optional parameter: `state` (running, stopped, pending, terminated, all)
+  - Optional parameter: `region` (defaults to us-east-1)
 - **describe_ec2_instance**: "Show details for instance i-1234567890abcdef0"
   - Required parameter: `instance_id`
+  - Optional parameter: `region` (defaults to us-east-1)
 
 #### S3 Operations  
 - **list_s3_buckets**: "List all my S3 buckets" or "Show me my buckets"
+  - Optional parameter: `region` (defaults to us-east-1)
 
 ### Example Tool Calls
 
@@ -109,7 +114,8 @@ Once configured, you can interact with AWS services through natural language via
 {
   "tool": "list_ec2_instances",
   "arguments": {
-    "state": "running"
+    "state": "running",
+    "region": "us-east-1"
   }
 }
 ```
@@ -118,7 +124,8 @@ Once configured, you can interact with AWS services through natural language via
 {
   "tool": "describe_ec2_instance", 
   "arguments": {
-    "instance_id": "i-1234567890abcdef0"
+    "instance_id": "i-1234567890abcdef0",
+    "region": "us-east-1"
   }
 }
 ```
@@ -126,7 +133,9 @@ Once configured, you can interact with AWS services through natural language via
 ```json
 {
   "tool": "list_s3_buckets",
-  "arguments": {}
+  "arguments": {
+    "region": "us-east-1"
+  }
 }
 ```
 
